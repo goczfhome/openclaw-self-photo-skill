@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Self Photo Skill v2.2 - 主脚本
+Self Photo Skill v1.0 - 主脚本
 
 职责：
 1. 获取用户输入
