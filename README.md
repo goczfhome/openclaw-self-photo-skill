@@ -33,7 +33,6 @@
 ```bash
 git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 ```
-或直接复制链接丢进飞书对话中 http://47.110.145.186:8002/static/uploads/self-photo-skill-v1.0.zip
 
 ### 2️⃣ 配置 API Key
 
@@ -58,6 +57,16 @@ git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 | 设置角色名字 小雨 | 给虚拟好友起名 |
 | 设置角色背景 她是个爱笑的女孩，23岁，喜欢喝拿铁，梦想环游世界。性格有点小迷糊，但特别暖心。 | 设置背景故事 |
 | 查看角色配置 | 查看当前设定 |
+
+---
+
+###  平台地址
+
+可访问 http://47.110.145.186:8002
+
+c:\Users\Administrator\Downloads\QQ20260325-230059.jpg
+c:\Users\Administrator\Downloads\QQ20260325-230359.jpg
+c:\Users\Administrator\Downloads\QQ20260325-230713.jpg
 
 ---
 
