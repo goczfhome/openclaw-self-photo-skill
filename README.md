@@ -28,21 +28,26 @@
 
 ## 🚀 快速上手
 
-### 1️⃣ 安装技能
+### 1️⃣ 在openclaw中安装技能
 
 ```bash
 git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 ```
 
-### 2️⃣ 配置 API Key
+### 2️⃣ 注册用户免费获取API Key
 
+```
+访问 http://47.110.145.186:8002 
+```
+
+
+### 3️⃣ 配置 API Key
 在对话中发送：
-
 ```
 设置自拍APIKey sp_xxxxxxxxxxxxxxxx
 ```
 
-### 3️⃣ 试试这些指令
+### 4️⃣ 试试这些指令
 
 | 指令 | 效果 |
 |------|------|
@@ -50,7 +55,7 @@ git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 | 看看你今天在干嘛 | 随机生活场景自拍 |
 | 早啊 / 晚安 | 触发对应时段互动 |
 
-### 4️⃣ 定制你的 TA
+### 定制你的 TA
 
 | 指令 | 说明 |
 |------|------|
@@ -60,9 +65,7 @@ git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 
 ---
 
-###  平台地址
-
-可访问 http://47.110.145.186:8002
+###  拍友平台地址
 
 ![图](http://47.110.145.186:8002/static/ui-ref/paiyou.jpg)  
 
