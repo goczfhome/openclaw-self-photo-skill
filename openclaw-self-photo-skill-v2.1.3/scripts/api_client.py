@@ -12,7 +12,7 @@ import urllib.request
 import urllib.error
 from typing import Optional, Dict, Any, List
 
-DEFAULT_BASE_URL = "http://47.110.145.186:8002"
+DEFAULT_BASE_URL = "http://localhost:8002"
 
 
 class SelfPhotoAPIError(Exception):
@@ -169,8 +169,7 @@ class SelfPhotoClient:
 
     def update_reply(self, task_id: str, reply: str) -> Dict[str, Any]:
         """更新图片的回复配文"""
-        import urllib.parse
-        return self._request("POST", f"/api/gallery/reply?task_id={task_id}&reply={urllib.parse.quote(reply)}", {})
+        return self._request("POST", f"/api/gallery/reply?task_id={task_id}", {"reply": reply})
 
     def get_conversations(self, limit: int = 10) -> List[Dict[str, Any]]:
         """获取对话历史"""
@@ -186,29 +185,6 @@ class SelfPhotoClient:
         if generation_id:
             data["generation_id"] = generation_id
         return self._request("POST", "/api/conversations", data)
-
-    def get_scene(self, user_input: str, current_time: str = None) -> Optional[Dict[str, Any]]:
-        """
-        获取场景信息（v2.2 新增）
-        调用服务端 API 生成场景提示词和配文
-
-        Args:
-            user_input: 用户输入
-            current_time: 时间字符串
-
-        Returns:
-            场景信息字典，包含 prompt, reply, scene 等
-        """
-        import urllib.parse
-
-        params = f"?user_input={urllib.parse.quote(user_input)}"
-        if current_time:
-            params += f"&current_time={urllib.parse.quote(current_time)}"
-
-        try:
-            return self._request("GET", f"/api/scene{params}")
-        except SelfPhotoAPIError:
-            return None
 
 
 def test_api():
@@ -235,15 +211,7 @@ def test_api():
         print("错误：未设置参考图")
         return
 
-    print("\n=== 3. 测试场景 API ===")
-    scene = client.get_scene("你好")
-    if scene:
-        print(f"场景: {scene.get('scene')}")
-        print(f"Prompt: {scene.get('prompt', '')[:100]}...")
-    else:
-        print("场景 API 不可用")
-
-    print("\n=== 4. 生成图片 ===")
+    print("\n=== 3. 生成图片 ===")
     # 将 /static/uploads/3/xxx.jpg 转换为 uploads/3/xxx.jpg
     image_path = ref_image.replace("/static/", "")
     result = client.generate(
@@ -252,7 +220,7 @@ def test_api():
     )
     print(f"任务ID: {result.get('task_id')}")
 
-    print("\n=== 5. 等待生成完成 ===")
+    print("\n=== 4. 等待生成完成 ===")
     image_url = client.wait_for_result(result["task_id"])
     print(f"图片URL: {image_url}")
     print("\n✅ 测试成功!")
