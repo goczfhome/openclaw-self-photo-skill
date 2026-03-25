@@ -33,6 +33,7 @@
 ```bash
 git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 ```
+或直接复制链接丢进飞书对话中 http://47.110.145.186:8002/static/uploads/self-photo-skill-v1.0.zip
 
 ### 2️⃣ 配置 API Key
 
@@ -48,7 +49,6 @@ git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 |------|------|
 | 发个自拍 | 生成当前时段的自拍 + 配文 |
 | 看看你今天在干嘛 | 随机生活场景自拍 |
-| 来张职场风格的自拍 | 指定场景自拍 |
 | 早啊 / 晚安 | 触发对应时段互动 |
 
 ### 4️⃣ 定制你的 TA
@@ -56,8 +56,7 @@ git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 | 指令 | 说明 |
 |------|------|
 | 设置角色名字 小雨 | 给虚拟好友起名 |
-| 设置角色性格 温柔体贴，偶尔傲娇 | 设定性格 |
-| 设置角色背景 女，25岁上海设计师，爱猫爱咖啡 | 设置背景故事 |
+| 设置角色背景 她是个爱笑的女孩，23岁，喜欢喝拿铁，梦想环游世界。性格有点小迷糊，但特别暖心。 | 设置背景故事 |
 | 查看角色配置 | 查看当前设定 |
 
 ---
@@ -71,16 +70,17 @@ openclaw-self-photo-skill/
 ├── scripts/
 │   ├── generate_selfie.py  # 主控逻辑（意图识别+生成调度）
 │   ├── api_client.py        # 图片生成 API 客户端
-│   ├── time_context.py      # 时间场景生成器
-│   └── run.py              # 入口脚本
 └── LICENSE                 # MIT 许可证
 ```
 
 ---
+## 🛠️ 调用第三方api生图
+- 平台已接入第三方生图 API稳定出图
+
 
 ## 🛠️ 自建服务端
 
-拍友需要配合一个图片生成 API 使用。你可以：
+拍友可自行配置一个图片生成 API 使用。你可以：
 
 - 使用自己部署的 Stable Diffusion / ComfyUI 服务
 - 接入第三方生图 API（如 RunningHub、阿里通义万相）
