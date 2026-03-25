@@ -63,8 +63,10 @@ git clone https://github.com/goczfhome/openclaw-self-photo-skill.git
 ###  平台地址
 
 可访问 http://47.110.145.186:8002
+http://47.110.145.186:8002/static/ui-ref/index.jpg
+http://47.110.145.186:8002/static/ui-ref/create.jpg
+http://47.110.145.186:8002/static/ui-ref/photo.jpg
 
-![alt text](QQ20260325-230059.jpg)![alt text](QQ20260325-230359.jpg)![alt text](QQ20260325-230713.jpg)
 
 ---
 
