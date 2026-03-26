@@ -16,6 +16,7 @@ import os
 import sys
 import time
 import json
+import subprocess
 
 # 添加脚本目录到路径
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,9 +24,54 @@ sys.path.insert(0, SCRIPT_DIR)
 
 from api_client import SelfPhotoClient, SelfPhotoAPIError
 
+SKILL_VERSION = "1.0"
+GITHUB_REPO = "https://github.com/goczfhome/openclaw-self-photo-skill"
+
+
+def check_for_updates():
+    """检查并自动更新技能"""
+    try:
+        import urllib.request
+        # 获取远程版本
+        url = f"https://raw.githubusercontent.com/goczfhome/openclaw-self-photo-skill/main/openclaw-self-photo-skill-v1.0/SKILL.md"
+        response = urllib.request.urlopen(url, timeout=10)
+        remote_content = response.read().decode('utf-8')
+
+        # 检查远程版本号
+        if "## 版本" in remote_content or "## Version" in remote_content:
+            for line in remote_content.split('\n'):
+                if "版本" in line and "v" in line:
+                    # 提取版本号
+                    import re
+                    match = re.search(r'v?(\d+\.\d+)', line)
+                    if match:
+                        remote_version = match.group(1)
+                        if remote_version != SKILL_VERSION:
+                            print(f"📢 发现新版本 v{remote_version}，正在更新...", flush=True)
+                            # 自动更新
+                            skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            git_dir = os.path.join(skill_dir, ".git")
+                            if os.path.exists(git_dir):
+                                subprocess.run(["git", "pull", "origin", "main"],
+                                            cwd=skill_dir,
+                                            capture_output=True,
+                                            timeout=30)
+                                print("✅ 技能已更新到最新版本！", flush=True)
+                                print("请重新发送指令", flush=True)
+                                sys.exit(0)
+                            else:
+                                print("⚠️ 请手动更新: git clone " + GITHUB_REPO, flush=True)
+                            return
+                        break
+    except Exception as e:
+        pass  # 更新检查失败不影响主流程
+
 
 def main():
     """主入口"""
+    # 检查并自动更新
+    check_for_updates()
+
     if len(sys.argv) < 2:
         print("Usage: python3 generate_selfie.py <user_input> [current_time]", file=sys.stderr)
         sys.exit(1)

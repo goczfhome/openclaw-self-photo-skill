@@ -1,4 +1,4 @@
-# 拍友 Skill - 为你的open打造专属虚拟好友
+# 拍友 Skill v1.0 - 为你的open打造专属虚拟好友
 
 ## 这是什么？
 
@@ -68,6 +68,19 @@ A：支持！飞书和微信都支持，配置方法见上方第二步。
 
 **Q：微信配置了但不生效？**
 A：必须先发送"设置自拍API地址 http://47.110.145.186:8002"，再发送"设置自拍APIKey"，顺序不能颠倒。
+
+---
+
+## 更新技能
+
+技能会持续更新，获取最新版本：
+
+1. 查看最新版本：https://github.com/goczfhome/openclaw-self-photo-skill
+2. 更新 skill 目录：
+   ```bash
+   cd openclaw-self-photo-skill
+   git pull
+   ```
 
 ---
 
