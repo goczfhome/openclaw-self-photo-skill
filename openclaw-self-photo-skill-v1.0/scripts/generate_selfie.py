@@ -33,36 +33,45 @@ def check_for_updates():
     try:
         import urllib.request
         # 获取远程版本
-        url = f"https://raw.githubusercontent.com/goczfhome/openclaw-self-photo-skill/main/openclaw-self-photo-skill-v1.0/SKILL.md"
+        url = f"https://raw.githubusercontent.com/goczfhome/openclaw-self-photo-skill/main/openclaw-self-photo-skill-v1.0/VERSION.md"
         response = urllib.request.urlopen(url, timeout=10)
         remote_content = response.read().decode('utf-8')
 
-        # 检查远程版本号
-        if "## 版本" in remote_content or "## Version" in remote_content:
-            for line in remote_content.split('\n'):
-                if "版本" in line and "v" in line:
-                    # 提取版本号
-                    import re
-                    match = re.search(r'v?(\d+\.\d+)', line)
-                    if match:
-                        remote_version = match.group(1)
-                        if remote_version != SKILL_VERSION:
-                            print(f"📢 发现新版本 v{remote_version}，正在更新...", flush=True)
-                            # 自动更新
-                            skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                            git_dir = os.path.join(skill_dir, ".git")
-                            if os.path.exists(git_dir):
-                                subprocess.run(["git", "pull", "origin", "main"],
-                                            cwd=skill_dir,
-                                            capture_output=True,
-                                            timeout=30)
-                                print("✅ 技能已更新到最新版本！", flush=True)
-                                print("请重新发送指令", flush=True)
-                                sys.exit(0)
-                            else:
-                                print("⚠️ 请手动更新: git clone " + GITHUB_REPO, flush=True)
-                            return
-                        break
+        # 提取远程版本号（第一个找到的版本）
+        import re
+        match = re.search(r'## v?(\d+\.\d+)', remote_content)
+        if not match:
+            return
+
+        remote_version = match.group(1)
+        if remote_version == SKILL_VERSION:
+            return  # 版本相同，无需更新
+
+        # 比较版本号
+        local_parts = [int(x) for x in SKILL_VERSION.split('.')]
+        remote_parts = [int(x) for x in remote_version.split('.')]
+
+        # 小版本更新（如 1.0 -> 1.1）：自动更新
+        # 主版本更新（如 1.x -> 2.0）：需要确认
+        is_major_update = remote_parts[0] > local_parts[0]
+
+        if is_major_update:
+            print(f"📢 发现重要更新 v{remote_version}！", flush=True)
+            print(f"⚠️ 此更新需要确认，请访问 GitHub 手动更新：", flush=True)
+            print(f"   {GITHUB_REPO}", flush=True)
+            print("💡 或发送「更新拍友」命令确认更新", flush=True)
+        else:
+            # 小版本自动更新
+            print(f"📢 发现新版本 v{remote_version}，正在更新...", flush=True)
+            skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            git_dir = os.path.join(skill_dir, ".git")
+            if os.path.exists(git_dir):
+                subprocess.run(["git", "pull", "origin", "main"],
+                            cwd=skill_dir,
+                            capture_output=True,
+                            timeout=30)
+                print("✅ 技能已更新到最新版本！", flush=True)
+                sys.exit(0)
     except Exception as e:
         pass  # 更新检查失败不影响主流程
 
