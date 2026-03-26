@@ -139,7 +139,7 @@ def main():
         import urllib.request
         import urllib.parse
 
-        params = {"user_input": user_input}
+        params = {"user_input": user_input, "role_nickname": role_nickname}
         if current_time:
             params["current_time"] = current_time
 
