@@ -7,7 +7,7 @@ Self Photo Skill v2.2 - 主脚本
 1. 获取用户输入
 2. 调用服务器 API 获取场景（服务端处理场景生成）
 3. 调用服务器 API 生成图片
-4. 发送图片和回复
+4. 发送图片和回复（支持飞书直接发图片）
 
 注意：所有提示词逻辑都在服务器端，Skill 只负责调用流程
 """
@@ -16,12 +16,130 @@ import os
 import sys
 import time
 import json
+import urllib.request
+import urllib.error
+import urllib.parse
+import uuid
+import base64
+import hmac
+import hashlib
+from datetime import datetime
 
 # 添加脚本目录到路径
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 
 from api_client import SelfPhotoClient, SelfPhotoAPIError
+
+
+# ==================== 飞书 API ====================
+
+def get_feishu_token(app_id: str, app_secret: str) -> str:
+    """获取飞书 tenant_access_token"""
+    url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
+    data = json.dumps({"app_id": app_id, "app_secret": app_secret}).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    if result.get("code") != 0:
+        raise Exception(f"获取飞书token失败: {result}")
+    return result["tenant_access_token"]
+
+
+def upload_image_to_feishu(token: str, image_data: bytes) -> str:
+    """上传图片到飞书，返回 image_key"""
+    boundary = str(uuid.uuid4())
+    filename = "selfie.jpg"
+    body = (
+        b"--" + boundary.encode() + b"\r\n"
+        b'Content-Disposition: form-data; name="image_type"; filename=""\r\n\r\n"
+        b"message\r\n"
+        b"--" + boundary.encode() + b"\r\n"
+        b'Content-Disposition: form-data; name="image"; filename="' + filename.encode() + b'"\r\n'
+        b"Content-Type: image/jpeg\r\n\r\n"
+    ) + image_data + b"\r\n" + (
+        b"--" + boundary.encode() + b"--\r\n"
+    )
+    url = "https://open.feishu.cn/open-apis/im/v1/images"
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": f"multipart/form-data; boundary={boundary}"
+        },
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    if result.get("code") != 0:
+        raise Exception(f"上传飞书图片失败: {result}")
+    return result["data"]["image_key"]
+
+
+def send_feishu_image(token: str, receive_id: str, image_key: str, reply: str) -> None:
+    """通过飞书机器人发送图片消息"""
+    url = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id"
+    payload = {
+        "receive_id": receive_id,
+        "msg_type": "image",
+        "content": json.dumps({"image_key": image_key}),
+        "uuid": str(uuid.uuid4())
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    if result.get("code") != 0:
+        print(f"[WARN] 飞书发图片失败: {result}", file=sys.stderr)
+
+    # 再发一条文字消息
+    payload["msg_type"] = "text"
+    payload["content"] = json.dumps({"text": reply})
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    if result.get("code") != 0:
+        print(f"[WARN] 飞书发文字失败: {result}", file=sys.stderr)
+
+
+def download_image(url: str) -> bytes:
+    """下载图片数据"""
+    req = urllib.request.Request(url)
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read()
+
+
+def try_send_feishu(image_url: str, reply: str, feishu_app_id: str, feishu_app_secret: str, feishu_user_open_id: str) -> bool:
+    """尝试通过飞书发图片，如果成功返回 True"""
+    if not all([feishu_app_id, feishu_app_secret, feishu_user_open_id]):
+        return False
+    try:
+        token = get_feishu_token(feishu_app_id, feishu_app_secret)
+        image_data = download_image(image_url)
+        image_key = upload_image_to_feishu(token, image_data)
+        send_feishu_image(token, feishu_user_open_id, image_key, reply)
+        return True
+    except Exception as e:
+        print(f"[WARN] 飞书发图片失败，降级为链接: {e}", file=sys.stderr)
+        return False
 
 
 def main():
@@ -81,8 +199,6 @@ def main():
     # 服务端返回：scene, prompt, reply 等
     try:
         scene_url = f"{api_url}/api/scene"
-        import urllib.request
-        import urllib.parse
 
         params = {"user_input": user_input}
         if current_time:
@@ -116,7 +232,6 @@ def main():
     if image_path.startswith("/static/"):
         image_path = image_path.replace("/static/", "")
     elif image_path.startswith("http"):
-        import urllib.parse
         parsed = urllib.parse.urlparse(image_path)
         image_path = parsed.path
         if image_path.startswith("/"):
@@ -170,9 +285,22 @@ def main():
         print(f"保存对话失败: {e}", file=sys.stderr)
 
     # 11. 输出最终结果
-    # 飞书发送图片 + 文字
-    final_output = f"FINAL_REPLY:{reply}\n{image_url}"
-    print(final_output)
+    # 优先尝试通过飞书直接发图片（需要配置飞书凭证）
+    feishu_app_id = os.environ.get("FEISHU_APP_ID", "")
+    feishu_app_secret = os.environ.get("FEISHU_APP_SECRET", "")
+    feishu_user_open_id = os.environ.get("FEISHU_USER_OPEN_ID", "")
+
+    if all([feishu_app_id, feishu_app_secret, feishu_user_open_id]):
+        sent = try_send_feishu(image_url, reply, feishu_app_id, feishu_app_secret, feishu_user_open_id)
+        if sent:
+            # 飞书已发送，stdout 输出简短标记让 OpenClaw 知道已完成
+            print(f"[OK] 已通过飞书发送图片和回复")
+        else:
+            # 降级为链接
+            print(f"FINAL_REPLY:{reply}\n{image_url}")
+    else:
+        # 未配置飞书凭证，输出链接
+        print(f"FINAL_REPLY:{reply}\n{image_url}")
 
 
 if __name__ == "__main__":
