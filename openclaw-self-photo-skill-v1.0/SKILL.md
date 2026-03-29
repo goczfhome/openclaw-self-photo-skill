@@ -36,47 +36,28 @@
 
 配置后，自拍照会以图片形式直接发送到飞书，而不是链接。
 
-### 第一步：创建飞书自建应用
+### 第一步：在飞书开放平台获取凭证
 
-1. 打开 [飞书开放平台](https://open.feishu.cn/app)
-2. 点击「创建企业自建应用」，填写应用名称（如"拍友助手"）
-3. 进入应用后，记下 **App ID** 和 **App Secret**（在「凭证与基础信息」页面）
-
-### 第二步：配置应用权限
-
-1. 进入「权限管理」，搜索并开通以下权限：
+1. 打开 [飞书开放平台](https://open.feishu.cn/app)，创建或打开一个自建应用
+2. 进入「凭证与基础信息」页面，获取 **App ID** 和 **App Secret**
+3. 进入「权限管理」，开通以下权限：
    - `im:message:send_as_bot`（发送消息）
    - `im:image:create`（上传图片）
 
-### 第三步：获取你的飞书 Open ID
+### 第二步：在对话中发送配置
 
-1. 在飞书桌面客户端，点击左侧「消息」
-2. 找到你创建的机器人的对话
-3. 对话右上角点击「···」→「查看消息」，地址栏中的 `open_id` 即为你的用户 ID
-   - 格式类似：`ou_xxxxxxxxxxxxxxxxxx`
-
-### 第四步：在拍友平台配置
-
-在飞书对话中依次发送以下三条指令：
+在飞书对话中发送APP ID和App Secre配置发送图片。
 
 ```
-设置飞书APPID cli_xxxxxxxxxxxxxxxx
-设置飞书密钥 xxxxxxxxxxxxxxxxxxxxxxxx
-设置飞书用户OpenID ou_xxxxxxxxxxxxxxxx
+APP ID： cli_xxxxxxxxxxxxxxxx
+App Secre： xxxxxxxxxxxxxxxxxxxxxxxx
+配置直接发送图片
 ```
 
 配置成功后，发送「发个自拍」，机器人会以图片形式发送。
 
 ---
 
-## 进阶设置（可选）
-
-| 指令 | 说明 |
-|------|------|
-| 设置角色名字 小明 | 给你的虚拟好友起个名字 |
-| 设置角色性格 温柔体贴 | 设定角色性格 |
-
----
 
 ## 常见问题
 
@@ -90,7 +71,7 @@ A：回到拍友平台重新上传/选择参考图即可。
 A：目前仅支持飞书，其他渠道陆续开放中。
 
 **Q：配置了飞书凭证但还是发链接？**
-A：检查飞书应用是否开通了 `im:message:send_as_bot` 和 `im:image:create` 权限，并确认 Open ID 正确。
+A：检查飞书应用是否开通了 `im:message:send_as_bot` 和 `im:image:create` 权限。
 
 ---
 

@@ -84,18 +84,13 @@ class SelfPhotoClient:
 
     def upload_image(self, image_path: str) -> Dict[str, Any]:
         """上传图片"""
-        import mimetypes
+        import uuid
 
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"图片不存在: {image_path}")
 
-        # 读取文件
         with open(image_path, "rb") as f:
             image_data = f.read()
-
-        # 构建 multipart 请求
-        import tempfile
-        import uuid
 
         boundary = str(uuid.uuid4())
         body = b"--" + boundary.encode() + b"\r\n"
@@ -189,7 +184,7 @@ class SelfPhotoClient:
 
     def get_scene(self, user_input: str, current_time: str = None) -> Optional[Dict[str, Any]]:
         """
-        获取场景信息（v2.2 新增）
+        获取场景信息
         调用服务端 API 生成场景提示词和配文
 
         Args:
@@ -216,9 +211,9 @@ def test_api():
     import sys
 
     if len(sys.argv) < 2:
-        api_key = "sp_bb55942ef62f4d51993baafd"  # 测试用
-    else:
-        api_key = sys.argv[1]
+        print("Usage: python api_client.py <api_key>")
+        sys.exit(1)
+    api_key = sys.argv[1]
 
     client = SelfPhotoClient(api_key)
 

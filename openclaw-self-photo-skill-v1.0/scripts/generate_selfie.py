@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Self Photo Skill v2.2 - 主脚本
+Self Photo Skill v1.1 - 主脚本
 
 职责：
 1. 获取用户输入
@@ -20,10 +20,6 @@ import urllib.request
 import urllib.error
 import urllib.parse
 import uuid
-import base64
-import hmac
-import hashlib
-from datetime import datetime
 
 # 添加脚本目录到路径
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -49,14 +45,13 @@ def get_feishu_token(app_id: str, app_secret: str) -> str:
 def upload_image_to_feishu(token: str, image_data: bytes) -> str:
     """上传图片到飞书，返回 image_key"""
     boundary = str(uuid.uuid4())
-    filename = "selfie.jpg"
     body = (
         b"--" + boundary.encode() + b"\r\n"
-        b'Content-Disposition: form-data; name="image_type"; filename=""\r\n\r\n"
+        b'Content-Disposition: form-data; name="image_type"\r\n\r\n'
         b"message\r\n"
         b"--" + boundary.encode() + b"\r\n"
-        b'Content-Disposition: form-data; name="image"; filename="' + filename.encode() + b'"\r\n'
-        b"Content-Type: image/jpeg\r\n\r\n"
+        b'Content-Disposition: form-data; name="image"; filename="selfie.jpg"\r\n'
+        b"Content-Type: application/octet-stream\r\n\r\n"
     ) + image_data + b"\r\n" + (
         b"--" + boundary.encode() + b"--\r\n"
     )
@@ -73,13 +68,13 @@ def upload_image_to_feishu(token: str, image_data: bytes) -> str:
     with urllib.request.urlopen(req, timeout=30) as resp:
         result = json.loads(resp.read().decode("utf-8"))
     if result.get("code") != 0:
-        raise Exception(f"上传飞书图片失败: {result}")
+        raise Exception(f"上传飞书图片失败: code={result.get('code')}, msg={result.get('msg')}")
     return result["data"]["image_key"]
 
 
 def send_feishu_image(token: str, receive_id: str, image_key: str, reply: str) -> None:
     """通过飞书机器人发送图片消息"""
-    url = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=open_id"
+    url = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id"
     payload = {
         "receive_id": receive_id,
         "msg_type": "image",
@@ -127,15 +122,15 @@ def download_image(url: str) -> bytes:
         return resp.read()
 
 
-def try_send_feishu(image_url: str, reply: str, feishu_app_id: str, feishu_app_secret: str, feishu_user_open_id: str) -> bool:
+def try_send_feishu(image_url: str, reply: str, feishu_app_id: str, feishu_app_secret: str, feishu_chat_id: str) -> bool:
     """尝试通过飞书发图片，如果成功返回 True"""
-    if not all([feishu_app_id, feishu_app_secret, feishu_user_open_id]):
+    if not all([feishu_app_id, feishu_app_secret, feishu_chat_id]):
         return False
     try:
         token = get_feishu_token(feishu_app_id, feishu_app_secret)
         image_data = download_image(image_url)
         image_key = upload_image_to_feishu(token, image_data)
-        send_feishu_image(token, feishu_user_open_id, image_key, reply)
+        send_feishu_image(token, feishu_chat_id, image_key, reply)
         return True
     except Exception as e:
         print(f"[WARN] 飞书发图片失败，降级为链接: {e}", file=sys.stderr)
@@ -223,9 +218,7 @@ def main():
 
     except Exception as e:
         print(f"ERROR: 获取场景失败 - {e}", file=sys.stderr)
-        # 备用：使用默认提示词
-        prompt = "甜美少女风格"
-        reply = "给你拍一张~"
+        raise
 
     # 7. 处理参考图路径
     image_path = ref_image
@@ -268,7 +261,7 @@ def main():
         client.update_reply(task_id, reply)
         print(f"已保存回复: {reply}", file=sys.stderr)
     except Exception as e:
-        print(f"保存回复失败: {e}", file=sys.stderr)
+        raise Exception(f"保存回复失败: {e}")
 
     # 11. 保存对话记录
     try:
@@ -282,16 +275,16 @@ def main():
         else:
             print(f"未获取到generation_id，无法保存对话", file=sys.stderr)
     except Exception as e:
-        print(f"保存对话失败: {e}", file=sys.stderr)
+        raise Exception(f"保存对话失败: {e}")
 
-    # 11. 输出最终结果
+    # 12. 输出最终结果
     # 优先尝试通过飞书直接发图片（需要配置飞书凭证）
     feishu_app_id = os.environ.get("FEISHU_APP_ID", "")
     feishu_app_secret = os.environ.get("FEISHU_APP_SECRET", "")
-    feishu_user_open_id = os.environ.get("FEISHU_USER_OPEN_ID", "")
+    feishu_chat_id = os.environ.get("FEISHU_CHAT_ID", "")
 
-    if all([feishu_app_id, feishu_app_secret, feishu_user_open_id]):
-        sent = try_send_feishu(image_url, reply, feishu_app_id, feishu_app_secret, feishu_user_open_id)
+    if all([feishu_app_id, feishu_app_secret, feishu_chat_id]):
+        sent = try_send_feishu(image_url, reply, feishu_app_id, feishu_app_secret, feishu_chat_id)
         if sent:
             # 飞书已发送，stdout 输出简短标记让 OpenClaw 知道已完成
             print(f"[OK] 已通过飞书发送图片和回复")
